@@ -85,8 +85,6 @@ unsigned char I2CDataTransfered(unsigned char* i2c_data, unsigned char input_len
                 clearBuffer();
                 RELEASE_BUS();
             }
-                
-            
             break;
             
         case 3:                     //Last byte was DATA    - READ
