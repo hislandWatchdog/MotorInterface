@@ -18,18 +18,14 @@
 #include "QEI.h"
 #include "Pin_manager.h"
 
+
 #define PIC1_ADDR 0x1D
 #define input_len 1
 #define output_len 1
 
-typedef struct{
-    unsigned char age;
-    unsigned char brothers;
-    unsigned char height;
-    unsigned char weight;
-}person;
+#define STOP_QEI() IC1IE = 0
+#define START_QEI() IC1IE = 1
 
-person billy;
 unsigned char buffer[(input_len < output_len ? output_len : input_len)] = {0};
 
 unsigned int counter = 0;
@@ -46,42 +42,39 @@ void resetPorts(void){
     PORTC = 0x00;
 }
 
-void fillBuffer(person *obj){
-    buffer[0] = obj->age;
-}
 
 void __interrupt(high_priority) isr_high(void){
     if(SSPIE && SSPIF){
-        SSPIF = 0;
-        char data_state = I2CDataTransfered(buffer,input_len, output_len);
+        STOP_QEI();
+        unsigned char data_state = I2CDataTransfered(buffer,input_len, output_len);
         
         switch(data_state){
             case RECEIVED:
+                buffer[0] = rpm;
                 break;
             case SENT:
+                START_QEI();
                 break;
             default:
                 break;
         }
     }
+    
     if(IC1IF == 1 && IC1IE == 1){
-        PORTCbits.RC6 = 1; //LED OFF
         IC1IF = 0; 
         
         counter = ((unsigned int)(VELRH<<8)) | (unsigned int)VELRL;
         rpm = CONSTANT_VELOCITY/((unsigned long)counter);
-        billy.age = rpm;
-        fillBuffer(&billy);
     }
 }
 
 void main(void) {
     IPEN   = 1;       //Enable interrupt priorities
     GIEH   = 1;       //Enable High priority interruptions
-    IC1IE  = 1;  //Enable IC1 Interruption
-    IC1IP  = 1;  //Set IC1 as Low Priority
+    IC1IE  = 1;       //Enable IC1 Interruption
+    IC1IP  = 1;       //Set IC1 as High Priority
     
-    resetPorts();
+    //resetPorts();
     I2CInit(SLAVE, PIC1_ADDR);
     
     
@@ -89,14 +82,11 @@ void main(void) {
     Quadrature_Encoder_Initialize();
     PIN_MANAGER_Initialize();
     
-    PORTCbits.RC6 = 0; //LED ON
     PWM_Set_Duty(500);
     
-    memset(&billy,0,sizeof(billy));     //Clear all information in data structure
-    billy.age = 10;
-    
-    //PORTCbits.RC3 = 0; //LED ON
+    PORTCbits.RC6 = 0; //LED ON
     while(1){
+        //LED1_Toggle();
     }
 }
 

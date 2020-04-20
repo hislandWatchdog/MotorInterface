@@ -37,108 +37,92 @@ void I2CInit(enum operation_modes operation_mode, char address){
     }
 }
 
-unsigned char I2CDataTransfered(unsigned char* i2c_data, unsigned char input_len, unsigned char output_len){
-    /*
-     * I should mention that this clock stretching was done explicitely because it isn't
-     * automatic like in PIC18F25K80. Also note that since clock stretching is done
-     * automatically in PIC18F25K80 for reading, I cannot do this explicit clock
-     * stretching. For this pic, there seems to be no problem
-    */
+unsigned char I2CDataTransfered(unsigned char* buffer, unsigned char input_len, unsigned char output_len){
     HOLD_BUS();
-    static unsigned char index;
     
-    unsigned char key;
+    static unsigned char index;
     unsigned char process_done = 0;
+    unsigned char key;
         
-    if(I2CCheckError())
+    RESET_FLAG();  //reset flag
+    
+    if(I2CCheckError()){
+        PORTCbits.RC6 = 1; //LED OFF
+        RELEASE_BUS();
         return process_done;
+    }
     
     key = (SSPSTATbits.D_NOT_A << 1) + SSPSTATbits.R_NOT_W;
+    RELEASE_BUS();
     
     switch(key){
-        case 0:                     //Last byte was ADDRESS - WRITE
+        case 0:                 //Last byte was ADDRESS - WRITE
             index = 0;
             
-            clearBuffer();
+            clearBuffer();      //Read address match byte
+            break;
+        case 1:                 //Last byte was ADDRESS - READ
+            index = 0;
+            
+            clearBuffer();      //Read address match byte
+            I2CSend(buffer[index++]);
+            
+            if(index == output_len)
+                process_done = SENT;
+            
+            break;
+        case 2:                 //Last byte was DATA    - WRITE
+            HOLD_BUS();
+            
+            if(index < input_len)
+                I2CReceive(buffer + index++);
             RELEASE_BUS();
-            break;
-        
-        case 1:                     //Last byte was ADDRESS - READ
-            index = 0;
-            clearBuffer();          //Read address match byte
             
-            I2CSend(*(i2c_data + index++));
-            break;
+            if( index == input_len)
+                process_done = RECEIVED;
             
-        case 2:                     //Last byte was DATA    - WRITE
-            if(index < input_len){
-                I2CReceive(i2c_data + index++);
-                if(index == input_len)
-                    process_done = RECEIVED;
-            }
-            else{
-                /*
-                 * received some data that needs to be
-                 * cleared from the buffer but don't want to
-                 * save it anywhere
-                */
-                clearBuffer();
-                RELEASE_BUS();
-            }
             break;
-            
-        case 3:                     //Last byte was DATA    - READ
-            if(index < output_len){
-                I2CSend(*(i2c_data + index++));
-                if(index == output_len)
-                    process_done = SENT;
-            }
-            else{
-                /*
-                 *Asked to send more data but no more data is available
-                 * sending 0
-                */
-                I2CSend(255);
-            }
+        case 3:                 //Last byte was DATA    - READ
+            if(index < output_len)
+                I2CSend(buffer[index++]);
+            if( index == output_len)
+                process_done = SENT;
             break;
-            
         default:
             break;
     }
-    RELEASE_BUS();
+    
     return process_done;
 }
 
 void I2CSend(unsigned char input){
-    SSPBUF = input;             //load data
-    RELEASE_BUS();              //SCL pin is enabled (clock is released)
-    while(SSPSTATbits.BF);      //Wait for buffer to be empty
+    if(SSPSTATbits.BF)
+        clearBuffer();
+    
+    SSPBUF = input;         //load data
+    RELEASE_BUS();   //SCL pin is enabled (clock is released)
+    while(SSPSTATbits.BF);  //Wait for buffer to be empty
 }
 
 void I2CReceive(unsigned char *msg_input){
     *msg_input = SSPBUF;
-    RELEASE_BUS();              //SCL pin is enabled (clock is released)
-    while(SSPSTATbits.BF);      //Wait for buffer to be empty
 }
 
 bool I2CCheckError(void){
-    bool error_detected = false;
+    bool found_error = false;
     
-    if(SSPCONbits.SSPOV){
-        SSPCONbits.SSPOV = 0;      //clear error by software
-        clearBuffer();             //clear BF bit by reading SSPBUF
-        error_detected = true;
+    if(SSPCONbits.SSPOV || SSPCONbits.WCOL){
+        SSPCONbits.SSPOV = 0;  //clear error by software
+        SSPCONbits.WCOL = 0; //write collision occured
+        clearBuffer();
+        
+        found_error = true;
     }
-    if(SSPCONbits.WCOL){
-        SSPCONbits.WCOL = 0;       //write collision occurred
-        clearBuffer();             //clear BF bit by reading SSPBUF
-        error_detected = true;
-    }
-    return error_detected;
+    
+    return found_error;
 }
 
-void clearBuffer(void){
-    char trash;
-    trash = SSPBUF;             //BF bit must be cleared
-    while(SSPSTATbits.BF);      //Wait for buffer to be empty
+void clearBuffer(){
+    unsigned char data;
+    data = SSPBUF;      //clear BF bit by reading SSPBUF
 }
