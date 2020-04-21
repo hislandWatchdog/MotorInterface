@@ -32,10 +32,13 @@
 #define	QEI_H
 
 #include <xc.h> // include processor files - each processor file is guarded.  
+
 #define CONSTANT_VELOCITY 214285*16 // (60)(16X10^6)*16/4480*4 ----- (seconds per minute)*Postcaler/(Tcy)(CPR)      Tcy=4*Tosc
 
+enum priority_level {NO_INTERRUPTIONS, HIGH_PRIORITY, LOW_PRIORITY};
 
-void Quadrature_Encoder_Initialize(void);
+
+void Quadrature_Encoder_Initialize(enum priority_level priority);
 
 #endif	/* QEI_H */
 

@@ -48,7 +48,6 @@ void resetPorts(void){
 
 void __interrupt(high_priority) isr_high(void){
     if(SSPIE && SSPIF){
-        STOP_QEI();
         unsigned char data_state = I2CDataTransfered(buffer,input_bytes, output_bytes);
         
         switch(data_state){
@@ -56,14 +55,15 @@ void __interrupt(high_priority) isr_high(void){
                 buffer[0] = rpm;
                 break;
             case SENT:
-                START_QEI();
                 break;
             default:
                 break;
         }
     }
-    
-    if(IC1IF == 1 && IC1IE == 1){
+}
+
+void __interrupt(low_priority) isr_low(void){
+     if(IC1IF == 1 && IC1IE == 1){
         IC1IF = 0; 
         
         counter = ((unsigned int)(VELRH<<8)) | (unsigned int)VELRL;
@@ -72,22 +72,20 @@ void __interrupt(high_priority) isr_high(void){
 }
 
 void main(void) {
-    IPEN   = 1;       //Enable interrupt priorities
-    GIEH   = 1;       //Enable High priority interruptions
-    IC1IE  = 1;       //Enable IC1 Interruption
-    IC1IP  = 1;       //Set IC1 as High Priority
+    IPEN = 1;       //Enable interrupt priorities
+    GIEH = 1;       //Enable High priority interruptions
+    GIEL = 1;       //Enable Low priority interruptions   
     
     resetPorts();
+    
     I2CInit(SLAVE, PIC1_ADDR);
-    
-    
     PWM_Initialize();
-    Quadrature_Encoder_Initialize();
+    Quadrature_Encoder_Initialize(LOW_PRIORITY);
     PIN_MANAGER_Initialize();
     
     PWM_Set_Duty(500);
     
-    PORTCbits.RC6 = 0; //LED ON
+    LED1_SetOn();
     while(1){
     }
 }

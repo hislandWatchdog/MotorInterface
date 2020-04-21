@@ -47,7 +47,6 @@ unsigned char I2CDataTransfered(unsigned char* buffer, unsigned char input_len, 
     RESET_FLAG();  //reset flag
     
     if(I2CCheckError()){
-        PORTCbits.RC6 = 1; //LED OFF
         RELEASE_BUS();
         return process_done;
     }

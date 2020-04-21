@@ -8,9 +8,6 @@
 #ifndef I2CCOM_H
 #define	I2CCOM_H
 
-enum operation_modes {MASTER, SLAVE};
-enum transfer_type {NOPE, RECEIVED,SENT};
-
 #include <xc.h>
 #include <stdbool.h>
 #include "pic18f2331.h"
@@ -18,6 +15,9 @@ enum transfer_type {NOPE, RECEIVED,SENT};
 #define HOLD_BUS() SSPCONbits.CKP =  0
 #define RELEASE_BUS() SSPCONbits.CKP =  1
 #define RESET_FLAG() SSPIF = 0
+
+enum operation_modes {MASTER, SLAVE};
+enum transfer_type {RECEIVED,SENT};
 
 void I2CInit(enum operation_modes operation_mode, char address);
 unsigned char I2CDataTransfered(unsigned char* i2c_data, unsigned char input_len, unsigned char output_len);
