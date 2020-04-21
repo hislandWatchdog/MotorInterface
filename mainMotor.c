@@ -20,13 +20,16 @@
 
 
 #define PIC1_ADDR 0x1D
-#define input_len 3
-#define output_len 3
+#define input_bytes 1
+#define output_bytes 1
+#define BUF_LEN (input_bytes < output_bytes) ? output_bytes : input_bytes
 
 #define STOP_QEI() IC1IE = 0
 #define START_QEI() IC1IE = 1
 
-unsigned char buffer[(input_len < output_len ? output_len : input_len)] = {0};
+const unsigned char buf_len = (input_bytes < output_bytes) ? output_bytes : input_bytes;
+
+unsigned char buffer[BUF_LEN] = {0};
 
 unsigned int counter = 0;
 unsigned int rpm = 0;
@@ -46,13 +49,11 @@ void resetPorts(void){
 void __interrupt(high_priority) isr_high(void){
     if(SSPIE && SSPIF){
         STOP_QEI();
-        unsigned char data_state = I2CDataTransfered(buffer,input_len, output_len);
+        unsigned char data_state = I2CDataTransfered(buffer,input_bytes, output_bytes);
         
         switch(data_state){
             case RECEIVED:
                 buffer[0] = rpm;
-                buffer[1]++;
-                buffer[2]++;
                 break;
             case SENT:
                 START_QEI();
@@ -76,7 +77,7 @@ void main(void) {
     IC1IE  = 1;       //Enable IC1 Interruption
     IC1IP  = 1;       //Set IC1 as High Priority
     
-    //resetPorts();
+    resetPorts();
     I2CInit(SLAVE, PIC1_ADDR);
     
     
@@ -88,7 +89,6 @@ void main(void) {
     
     PORTCbits.RC6 = 0; //LED ON
     while(1){
-        //LED1_Toggle();
     }
 }
 

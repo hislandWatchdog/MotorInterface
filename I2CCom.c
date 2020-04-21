@@ -71,17 +71,33 @@ unsigned char I2CDataTransfered(unsigned char* buffer, unsigned char input_len, 
             
             break;
         case 2:                 //Last byte was DATA    - WRITE
-            if(index < input_len)
+            if(index < input_len){
                 I2CReceive(buffer + index++);
-            
-            if( index == input_len)
-                process_done = RECEIVED;
+                if( index == input_len)
+                    process_done = RECEIVED;
+            }
+            else{
+                /*
+                 * received some data that needs to be
+                 * cleared from the buffer but don't want to
+                 * save it anywhere
+                */
+                clearBuffer();
+            }
             break;
         case 3:                 //Last byte was DATA    - READ
-            if(index < output_len)
+            if(index < output_len){
                 I2CSend(buffer[index++]);
-            if( index == output_len)
-                process_done = SENT;
+                if( index == output_len)
+                    process_done = SENT;
+            }
+            else{
+                /*
+                 *Asked to send more data but no more data is available
+                 * sending 0
+                */
+                I2CSend(255);
+            }
             break;
         default:
             break;
