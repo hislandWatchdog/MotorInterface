@@ -53,7 +53,6 @@ unsigned char I2CDataTransfered(unsigned char* buffer, unsigned char input_len, 
     }
     
     key = (SSPSTATbits.D_NOT_A << 1) + SSPSTATbits.R_NOT_W;
-    RELEASE_BUS();
     
     switch(key){
         case 0:                 //Last byte was ADDRESS - WRITE
@@ -72,15 +71,11 @@ unsigned char I2CDataTransfered(unsigned char* buffer, unsigned char input_len, 
             
             break;
         case 2:                 //Last byte was DATA    - WRITE
-            HOLD_BUS();
-            
             if(index < input_len)
                 I2CReceive(buffer + index++);
-            RELEASE_BUS();
             
             if( index == input_len)
                 process_done = RECEIVED;
-            
             break;
         case 3:                 //Last byte was DATA    - READ
             if(index < output_len)
@@ -91,7 +86,7 @@ unsigned char I2CDataTransfered(unsigned char* buffer, unsigned char input_len, 
         default:
             break;
     }
-    
+    RELEASE_BUS();
     return process_done;
 }
 

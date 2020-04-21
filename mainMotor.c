@@ -20,8 +20,8 @@
 
 
 #define PIC1_ADDR 0x1D
-#define input_len 1
-#define output_len 1
+#define input_len 3
+#define output_len 3
 
 #define STOP_QEI() IC1IE = 0
 #define START_QEI() IC1IE = 1
@@ -51,6 +51,8 @@ void __interrupt(high_priority) isr_high(void){
         switch(data_state){
             case RECEIVED:
                 buffer[0] = rpm;
+                buffer[1]++;
+                buffer[2]++;
                 break;
             case SENT:
                 START_QEI();
