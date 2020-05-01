@@ -19,23 +19,24 @@
 #include "Pin_manager.h"
 
 
+#define USING_RIGHT_MOTOR true
 #define PIC1_ADDR 0x1D
 #define PIC2_ADDR 0x1B
 
-#define input_bytes 3
-#define output_bytes 3
-#define BUF_LEN (input_bytes < output_bytes) ? output_bytes : input_bytes
+#define INPUT_BYTES 3
+#define OUTPUT_BYTES 3
+#define BUF_LEN (INPUT_BYTES < OUTPUT_BYTES) ? OUTPUT_BYTES : INPUT_BYTES
+
+#define PIC_ADDR USING_RIGHT_MOTOR ? PIC1_ADDR : PIC2_ADDR
+#define QEI_MOTOR_DIRECTION USING_RIGHT_MOTOR ? QEICONbits.UP_nDOWN : !QEICONbits.UP_nDOWN
 
 #define STOP_QEI() IC1IE = 0
 #define START_QEI() IC1IE = 1
-
-const unsigned char buf_len = (input_bytes < output_bytes) ? output_bytes : input_bytes;
 
 unsigned char buffer[BUF_LEN] = {0};
 
 unsigned int rpm = 0;
 unsigned int rpm_decimals = 0;
-unsigned int direction_status = 0;
 
 
 void resetPorts(void){
@@ -52,7 +53,7 @@ void resetPorts(void){
 
 void __interrupt(high_priority) isr_high(void){
     if(SSPIE && SSPIF){
-        unsigned char data_state = I2CDataTransfered(buffer,input_bytes, output_bytes);
+        unsigned char data_state = I2CDataTransfered(buffer,INPUT_BYTES, OUTPUT_BYTES);
         
         switch(data_state){
             case RECEIVED:
@@ -62,7 +63,7 @@ void __interrupt(high_priority) isr_high(void){
                 Motor_Direction(buffer[2]); 
                 buffer[0] = rpm;
                 buffer[1] = rpm_decimals;
-                buffer[2] = direction_status;
+                buffer[2] = QEI_MOTOR_DIRECTION;
                 break;
             case SENT:
                 break;
@@ -81,7 +82,6 @@ void __interrupt(low_priority) isr_low(void){
         qei_pulse_period = ((unsigned int)(VELRH<<8)) | (unsigned int)VELRL;
         rpm = CONSTANT_VELOCITY/((unsigned long)qei_pulse_period);
         rpm_decimals = (((CONSTANT_VELOCITY) %((unsigned long)qei_pulse_period))*100)/qei_pulse_period;
-        direction_status = QEICONbits.UP_nDOWN;
     }
 }
 
@@ -92,13 +92,13 @@ void main(void) {
     
     resetPorts();
     
-    I2CInit(SLAVE, PIC1_ADDR);
+    I2CInit(SLAVE, PIC_ADDR);
     PWM_Initialize();
     Quadrature_Encoder_Initialize(LOW_PRIORITY);
     PIN_MANAGER_Initialize();
-    Motor_Direction(BACKWARD); 
+    Motor_Direction(STOP_MOTOR); 
     
-    PWM_Set_Duty(200); //70-1000
+    PWM_Set_Duty(0); //70-1000
     
     LED1_SetOn();
     while(1){
