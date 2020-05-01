@@ -41,7 +41,7 @@ unsigned char I2CDataTransfered(unsigned char* buffer, unsigned char input_len, 
     HOLD_BUS();
     
     static unsigned char index;
-    unsigned char process_done = 0;
+    unsigned char process_done = IDLE;
     unsigned char key;
         
     RESET_FLAG();  //reset flag

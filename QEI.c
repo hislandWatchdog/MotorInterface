@@ -17,11 +17,11 @@ void Quadrature_Encoder_Initialize(enum priority_level priority)
     TRISA3 = 1;
     TRISA4 = 1;
     
-    QEICON = 0b00011011;
+    QEICON = 0b00011001;
     T5CON = 0b00000001;
     DFLTCON = 0b01110000;   //Digital Filter Control Register
-    CAP1CON = 0b01000010;
-    //CAP1REN = 1;
+    CAP1CON = 0b01000100;
+    CAP1REN = 1;
     
     switch(priority){
         case NO_INTERRUPTIONS:

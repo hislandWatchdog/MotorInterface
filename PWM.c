@@ -8,6 +8,7 @@
 
 #include <xc.h>
 #include "PWM.h"
+#include "Pin_manager.h"
 
 void PWM_Initialize(void)
 {
@@ -24,4 +25,30 @@ void PWM_Set_Duty(unsigned int duty)
     CCPR1L = (duty >> 2) & 0b0000000011111111;
     CCP1CONbits.DC1B1 = (duty >> 1) & 0b0000000000000001;
     CCP1CONbits.DC1B0 = duty & 0b0000000000000001;
+}
+
+void Motor_Direction(enum wheel_direction direction)
+{
+    
+    switch (direction)
+    { 
+        //FORWARD
+        case FORWARD:
+            C0_SetHigh();
+            C1_SetLow();
+        break;
+    
+        //BACKWARD
+        case BACKWARD:
+            C0_SetLow();
+            C1_SetHigh();
+        break;
+    
+        //STOP
+        case STOP_MOTOR:
+            C0_SetLow();
+            C1_SetLow();
+        break;
+    }
+    
 }

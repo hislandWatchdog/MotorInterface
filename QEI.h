@@ -33,7 +33,7 @@
 
 #include <xc.h> // include processor files - each processor file is guarded.  
 
-#define CONSTANT_VELOCITY 214285*16 // (60)(16X10^6)*16/4480*4 ----- (seconds per minute)*Postcaler/(Tcy)(CPR)      Tcy=4*Tosc
+#define CONSTANT_VELOCITY 214285 // (60)(16X10^6)*16/4480*4 ----- (seconds per minute)*Postcaler/(Tcy)(CPR)      Tcy=4*Tosc
 
 enum priority_level {NO_INTERRUPTIONS, HIGH_PRIORITY, LOW_PRIORITY};
 

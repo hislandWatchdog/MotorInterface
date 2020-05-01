@@ -32,10 +32,13 @@
 #define	PWM_H
 #define MAX_REG_DUTY 500
 
-#include <xc.h> // include processor files - each processor file is guarded.  
+#include <xc.h> // include processor files - each processor file is guarded. 
+
+enum wheel_direction {FORWARD, BACKWARD, STOP_MOTOR};
 
 void PWM_Initialize(void);
 void PWM_Set_Duty(unsigned int duty);
+void Motor_Direction(enum wheel_direction direction);
 
 
 

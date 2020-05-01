@@ -55,7 +55,6 @@
 #define C1_SetDigitalOutput() TRISC1 = 0
 
 void PIN_MANAGER_Initialize (void);
-void Motor_Direction(char direction);
 
 #endif	/* PIN_MANAGER_H */
 

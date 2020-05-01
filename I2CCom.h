@@ -17,7 +17,7 @@
 #define RESET_FLAG() SSPIF = 0
 
 enum operation_modes {MASTER, SLAVE};
-enum transfer_type {RECEIVED,SENT};
+enum transfer_type {RECEIVED,SENT, IDLE};
 
 void I2CInit(enum operation_modes operation_mode, char address);
 unsigned char I2CDataTransfered(unsigned char* i2c_data, unsigned char input_len, unsigned char output_len);
