@@ -64,14 +64,12 @@ void __interrupt(high_priority) isr_high(void){
                     rpm_decimals = 0;
                 }
                 qei_int_counter = 0;
-                //duty_received[0] = buffer[0];
-                //duty_received[1] = buffer[1];
-                if ((buffer[0]+ ((unsigned int)buffer[1] <<8)) <80 )  
+                if ((buffer[0]+ ((unsigned int)buffer[1] <<8)) <80 )  //Low limit of duty
                 {
                      PWM_Set_Duty(0);
                 }
                 else PWM_Set_Duty(buffer[0]+ ((unsigned int)buffer[1] <<8) );
-                if ((buffer[0]+ ((unsigned int)buffer[1] <<8)) >1000 )  
+                if ((buffer[0]+ ((unsigned int)buffer[1] <<8)) >1000 )  // High limit of duty
                 {
                      PWM_Set_Duty(1000);
                 }
