@@ -37,6 +37,7 @@ unsigned char buffer[BUF_LEN] = {0};
 
 unsigned int rpm = 0;
 unsigned int rpm_decimals = 0;
+unsigned int qei_int_counter = 0;
 
 
 void resetPorts(void){
@@ -57,9 +58,23 @@ void __interrupt(high_priority) isr_high(void){
         
         switch(data_state){
             case RECEIVED:
+                if (qei_int_counter ==0)
+                {
+                    rpm = 0;
+                    rpm_decimals = 0;
+                }
+                qei_int_counter = 0;
                 //duty_received[0] = buffer[0];
                 //duty_received[1] = buffer[1];
-                PWM_Set_Duty(buffer[0]+ ((unsigned int)buffer[1] <<8) );
+                if ((buffer[0]+ ((unsigned int)buffer[1] <<8)) <80 )  
+                {
+                     PWM_Set_Duty(0);
+                }
+                else PWM_Set_Duty(buffer[0]+ ((unsigned int)buffer[1] <<8) );
+                if ((buffer[0]+ ((unsigned int)buffer[1] <<8)) >1000 )  
+                {
+                     PWM_Set_Duty(1000);
+                }
                 Motor_Direction(buffer[2]); 
                 buffer[0] = rpm;
                 buffer[1] = rpm_decimals;
@@ -76,12 +91,13 @@ void __interrupt(high_priority) isr_high(void){
 void __interrupt(low_priority) isr_low(void){
      if(IC1IF == 1 && IC1IE == 1){
         IC1IF = 0; 
-        
+        qei_int_counter++;
         unsigned int qei_pulse_period;
         
         qei_pulse_period = ((unsigned int)(VELRH<<8)) | (unsigned int)VELRL;
         rpm = CONSTANT_VELOCITY/((unsigned long)qei_pulse_period);
         rpm_decimals = (((CONSTANT_VELOCITY) %((unsigned long)qei_pulse_period))*100)/qei_pulse_period;
+        
     }
 }
 
@@ -98,7 +114,7 @@ void main(void) {
     PIN_MANAGER_Initialize();
     Motor_Direction(STOP_MOTOR); 
     
-    PWM_Set_Duty(0); //70-1000
+    PWM_Set_Duty(0); //80-1000
     
     LED1_SetOn();
     while(1){
