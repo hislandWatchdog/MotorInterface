@@ -64,16 +64,17 @@ void __interrupt(high_priority) isr_high(void){
                     rpm_decimals = 0;
                 }
                 qei_int_counter = 0;
-                if ((buffer[0]+ ((unsigned int)buffer[1] <<8)) <80 )  //Low limit of duty
-                {
-                     PWM_Set_Duty(0);
-                }
-                else PWM_Set_Duty(buffer[0]+ ((unsigned int)buffer[1] <<8) );
-                if ((buffer[0]+ ((unsigned int)buffer[1] <<8)) >1000 )  // High limit of duty
+                
+                unsigned int duty_cycle_ref = buffer[0]+ ((unsigned int)buffer[1] <<8);
+                
+                if(duty_cycle_ref > 1000 )  // High limit of duty
                 {
                      PWM_Set_Duty(1000);
                 }
+                else
+                    PWM_Set_Duty(duty_cycle_ref);
                 Motor_Direction(buffer[2]); 
+                
                 buffer[0] = rpm;
                 buffer[1] = rpm_decimals;
                 buffer[2] = QEI_MOTOR_DIRECTION;
